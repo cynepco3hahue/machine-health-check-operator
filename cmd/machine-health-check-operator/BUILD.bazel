@@ -1,0 +1,68 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "client_builder.go",
+        "controller_context.go",
+        "helpers.go",
+        "main.go",
+        "start.go",
+        "version.go",
+    ],
+    importpath = "github.com/cynepco3hahue/machine-health-check-operator/cmd/machine-health-check-operator",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//pkg/operator:go_default_library",
+        "//pkg/version:go_default_library",
+        "//vendor/github.com/golang/glog:go_default_library",
+        "//vendor/github.com/openshift/api/config/v1:go_default_library",
+        "//vendor/github.com/openshift/client-go/config/clientset/versioned:go_default_library",
+        "//vendor/github.com/openshift/client-go/config/informers/externalversions:go_default_library",
+        "//vendor/github.com/spf13/cobra:go_default_library",
+        "//vendor/k8s.io/api/core/v1:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/runtime:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/runtime/schema:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/util/uuid:go_default_library",
+        "//vendor/k8s.io/client-go/informers:go_default_library",
+        "//vendor/k8s.io/client-go/kubernetes:go_default_library",
+        "//vendor/k8s.io/client-go/kubernetes/scheme:go_default_library",
+        "//vendor/k8s.io/client-go/kubernetes/typed/core/v1:go_default_library",
+        "//vendor/k8s.io/client-go/rest:go_default_library",
+        "//vendor/k8s.io/client-go/tools/clientcmd:go_default_library",
+        "//vendor/k8s.io/client-go/tools/leaderelection:go_default_library",
+        "//vendor/k8s.io/client-go/tools/leaderelection/resourcelock:go_default_library",
+        "//vendor/k8s.io/client-go/tools/record:go_default_library",
+    ],
+)
+
+load("//pkg/version:def.bzl", "version_x_defs")
+
+go_binary(
+    name = "machine-health-check-operator",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+    x_defs = version_x_defs(),
+)
+
+load(
+    "@io_bazel_rules_docker//container:container.bzl",
+    "container_image",
+)
+
+container_image(
+    name = "version-container",
+    base = "@fedora//image",
+    directory = "/",
+    files = ["//:get-version"],
+)
+
+container_image(
+    name = "machine-health-check-operator-image",
+    base = ":version-container",
+    directory = "/usr/bin/",
+    entrypoint = ["/usr/bin/machine-health-check-operator"],
+    files = [":machine-health-check-operator"],
+    visibility = ["//visibility:public"],
+)

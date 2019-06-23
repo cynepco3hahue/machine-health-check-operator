@@ -10,3 +10,10 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+# Ignore bazel directories
+bazel-bin/
+bazel-genfiles/
+bazel-machine-health-check-operator/
+bazel-out/
+bazel-testlogs/

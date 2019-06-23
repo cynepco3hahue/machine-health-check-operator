@@ -1,8 +1,8 @@
-# Implements hack/version.sh's kube::version::ldflags() for Bazel.
+# Implements hack/version.sh's version::ldflags() for Bazel.
 def version_x_defs():
-    # This should match the list of packages in kube::version::ldflag
+    # This should match the list of packages in version::ldflag
     stamp_pkgs = [
-        "kubevirt.io/client-go/version",
+        "github.com/cynepco3hahue/machine-health-check-operator/pkg/version",
     ]
 
     # This should match the list of vars in kube::version::ldflags

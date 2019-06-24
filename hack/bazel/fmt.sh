@@ -4,7 +4,7 @@ set -e
 
 source hack/common.sh
 
-shfmt -i 4 -w ${REPO_DIR}/cluster-up/ ${REPO_DIR}/hack/
+shfmt -i 4 -w ${REPO_DIR}/hack/
 bazel run \
     --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 \
     --workspace_status_command=./hack/print-workspace-status.sh \

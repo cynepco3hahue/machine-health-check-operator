@@ -4,8 +4,8 @@ http_archive(
     name = "io_bazel_rules_go",
     sha256 = "f04d2373bcaf8aa09bccb08a98a57e721306c8f6043a2a0ee610fd6853dcde3d",
     urls = [
-        "https://storage.googleapis.com/bazel-mirror/github.com/bazelbuild/rules_go/releases/download/0.18.6/rules_go-0.18.0.tar.gz",
-        "https://github.com/bazelbuild/rules_go/releases/download/0.18.6/rules_go-0.18.0.tar.gz",
+        "https://storage.googleapis.com/bazel-mirror/github.com/bazelbuild/rules_go/releases/download/0.18.6/rules_go-0.18.6.tar.gz",
+        "https://github.com/bazelbuild/rules_go/releases/download/0.18.6/rules_go-0.18.6.tar.gz",
     ],
 )
 
@@ -17,8 +17,8 @@ http_archive(
 
 http_archive(
     name = "com_github_bazelbuild_buildtools",
-    sha256 = "e0b5b400cfef17d65886365dc7289cb4ef8dfe07066165607413a271a32aa2a4",
-    strip_prefix = "buildtools-db073457c5a56d810e46efc18bb93a4fd7aa7b5e",
+    sha256 = "0b91ee315743a210af49e78bb81c0b037981e43409be12433f7456c9331f9997",
+    strip_prefix = "buildtools-eb1a85ca787f0f5f94ba66f41ee66fdfd4c49b70",
     # version 0.26.0
     url = "https://github.com/bazelbuild/buildtools/archive/eb1a85ca787f0f5f94ba66f41ee66fdfd4c49b70.zip",
 )

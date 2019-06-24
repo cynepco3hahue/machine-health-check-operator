@@ -13,3 +13,6 @@ VENDOR_DIR=$REPO_DIR/vendor
 CMD_OUT_DIR=$OUT_DIR/cmd
 MANIFESTS_OUT_DIR=$OUT_DIR/manifests
 MANIFEST_TEMPLATES_OUT_DIR=$OUT_DIR/templates/manifests
+
+BUILDER_REPO_DIR=/root/go/src/github.com/cynepco3hahue/machine-health-check-operator
+BUILDER_OUT_DIR=$BUILDER_REPO_DIR/_out

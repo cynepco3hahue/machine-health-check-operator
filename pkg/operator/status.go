@@ -7,12 +7,13 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/equality"
 
-	"github.com/golang/glog"
-	osconfigv1 "github.com/openshift/api/config/v1"
-	cvoresourcemerge "github.com/openshift/cluster-version-operator/lib/resourcemerge"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/golang/glog"
+	osconfigv1 "github.com/openshift/api/config/v1"
+	cvoresourcemerge "github.com/openshift/cluster-version-operator/lib/resourcemerge"
 )
 
 // StatusReason is a MixedCaps string representing the reason for a

@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/golang/glog"
-	osclientset "github.com/openshift/client-go/config/clientset/versioned"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/golang/glog"
+	osclientset "github.com/openshift/client-go/config/clientset/versioned"
 )
 
 // ClientBuilder can create a variety of kubernetes client interface

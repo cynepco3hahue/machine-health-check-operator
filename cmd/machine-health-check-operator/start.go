@@ -21,7 +21,7 @@ import (
 var (
 	startCmd = &cobra.Command{
 		Use:   "start",
-		Short: "Starts Machine API Operator",
+		Short: "Starts Machine Health Check Operator",
 		Long:  "",
 		Run:   runStartCmd,
 	}
@@ -35,7 +35,6 @@ var (
 func init() {
 	rootCmd.AddCommand(startCmd)
 	startCmd.PersistentFlags().StringVar(&startOpts.kubeconfig, "kubeconfig", "", "Kubeconfig file to access a remote cluster (testing only)")
-	startCmd.PersistentFlags().StringVar(&startOpts.imagesFile, "images-json", "", "images.json file for MAO.")
 }
 
 func runStartCmd(cmd *cobra.Command, args []string) {
@@ -44,10 +43,6 @@ func runStartCmd(cmd *cobra.Command, args []string) {
 
 	// To help debugging, immediately log version
 	glog.Infof("Version: %+v", version.Get())
-
-	if startOpts.imagesFile == "" {
-		glog.Fatalf("--images-json should not be empty")
-	}
 
 	cb, err := NewClientBuilder(startOpts.kubeconfig)
 	if err != nil {
@@ -64,7 +59,8 @@ func runStartCmd(cmd *cobra.Command, args []string) {
 			OnStartedLeading: func(ctx context.Context) {
 				ctrlCtx := CreateControllerContext(cb, stopCh, componentNamespace)
 				startControllers(ctrlCtx)
-				ctrlCtx.KubeNamespacedInformerFactory.Start(ctrlCtx.Stop)
+				ctrlCtx.ConfigMapInformerFactory.Start(ctrlCtx.Stop)
+				ctrlCtx.DeploymentInformerFactory.Start(ctrlCtx.Stop)
 				ctrlCtx.ConfigInformerFactory.Start(ctrlCtx.Stop)
 				close(ctrlCtx.InformersStarted)
 
@@ -84,7 +80,7 @@ func initRecorder(kubeClient kubernetes.Interface) record.EventRecorder {
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(glog.Infof)
 	eventBroadcaster.StartRecordingToSink(&coreclientsetv1.EventSinkImpl{Interface: kubeClient.CoreV1().Events("")})
-	return eventBroadcaster.NewRecorder(eventRecorderScheme, v1.EventSource{Component: "machineapioperator"})
+	return eventBroadcaster.NewRecorder(eventRecorderScheme, v1.EventSource{Component: "machinehealthcheckoperator"})
 }
 
 func startControllers(ctx *ControllerContext) {
@@ -92,9 +88,9 @@ func startControllers(ctx *ControllerContext) {
 	recorder := initRecorder(kubeClient)
 	go operator.New(
 		componentNamespace, componentName,
-		startOpts.imagesFile,
 		config,
-		ctx.KubeNamespacedInformerFactory.Apps().V1().Deployments(),
+		ctx.ConfigMapInformerFactory.Core().V1().ConfigMaps(),
+		ctx.DeploymentInformerFactory.Apps().V1().Deployments(),
 		ctx.ConfigInformerFactory.Config().V1().FeatureGates(),
 		ctx.ClientBuilder.KubeClientOrDie(componentName),
 		ctx.ClientBuilder.OpenshiftClientOrDie(componentName),

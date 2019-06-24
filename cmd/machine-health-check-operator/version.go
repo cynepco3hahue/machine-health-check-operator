@@ -11,8 +11,8 @@ import (
 var (
 	versionCmd = &cobra.Command{
 		Use:   "version",
-		Short: "Print the version number of Machine API Operator",
-		Long:  `All software has versions. This is Machine API Operator's.`,
+		Short: "Print the version number of Machine Health Check Operator",
+		Long:  `All software has versions. This is Machine Health Check Operator.`,
 		Run:   runVersionCmd,
 	}
 )
@@ -25,8 +25,7 @@ func runVersionCmd(cmd *cobra.Command, args []string) {
 	flag.Set("logtostderr", "true")
 	flag.Parse()
 
-	program := "MachineAPIOperator"
-	version := "v" + version.Get().String()
+	program := "Machine Health Check Operator"
 
-	fmt.Println(program, version)
+	fmt.Println(program, version.Get().String())
 }

@@ -13,8 +13,6 @@ import (
 	"k8s.io/utils/pointer"
 
 	"github.com/golang/glog"
-
-	osev1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/cluster-version-operator/lib/resourceapply"
 )
 
@@ -23,53 +21,8 @@ const (
 	deploymentRolloutTimeout      = 5 * time.Minute
 )
 
-func (optr *Operator) syncAll(config *OperatorConfig) error {
-	if err := optr.statusProgressing(); err != nil {
-		glog.Errorf("Error syncing ClusterOperatorStatus: %v", err)
-		return fmt.Errorf("error syncing ClusterOperatorStatus: %v", err)
-	}
-	if config.Controllers.Provider != clusterAPIControllerNoOp {
-		if err := optr.syncClusterAPIController(config); err != nil {
-			if err := optr.statusDegraded(err.Error()); err != nil {
-				// Just log the error here.  We still want to
-				// return the outer error.
-				glog.Errorf("Error syncing ClusterOperatorStatus: %v", err)
-			}
-			glog.Errorf("Error syncing cluster api controller: %v", err)
-			return err
-		}
-		glog.V(3).Info("Synced up all components")
-	}
-
-	if err := optr.statusAvailable(); err != nil {
-		glog.Errorf("Error syncing ClusterOperatorStatus: %v", err)
-		return fmt.Errorf("error syncing ClusterOperatorStatus: %v", err)
-	}
-
-	return nil
-}
-
-func (optr *Operator) syncClusterAPIController(config *OperatorConfig) error {
-	// Fetch the Feature
-	featureGate, err := optr.featureGateLister.Get(MachineAPIFeatureGateName)
-
-	var featureSet osev1.FeatureSet
-	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			return err
-		}
-		glog.V(2).Infof("Failed to find feature gate %q, will use default feature set", MachineAPIFeatureGateName)
-		featureSet = osev1.Default
-	} else {
-		featureSet = featureGate.Spec.FeatureSet
-	}
-
-	features, err := generateFeatureMap(featureSet)
-	if err != nil {
-		return err
-	}
-
-	controller := newDeployment(config, features)
+func (optr *Operator) syncAll(config *Config) error {
+	controller := newDeployment(config, config.TechPreviewEnabled)
 	_, updated, err := resourceapply.ApplyDeployment(optr.kubeClient.AppsV1(), controller)
 	if err != nil {
 		return err
@@ -105,25 +58,32 @@ func (optr *Operator) waitForDeploymentRollout(resource *appsv1.Deployment) erro
 	})
 }
 
-func newDeployment(config *OperatorConfig, features map[string]bool) *appsv1.Deployment {
+func newDeployment(config *Config, techPreviewEnabled bool) *appsv1.Deployment {
 	replicas := int32(1)
-	template := newPodTemplateSpec(config, features)
+	if techPreviewEnabled {
+		replicas = int32(0)
+	}
+
+	template := newPodTemplateSpec(config)
+
+	// we do not want to create deployment when it does not have any containers
+	if template == nil {
+		return nil
+	}
 
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "machine-api-controllers",
+			Name:      "machine-health-check-operator",
 			Namespace: config.TargetNamespace,
 			Labels: map[string]string{
-				"api":     "clusterapi",
-				"k8s-app": "controller",
+				ManagedByLabel: ManagedByLabelOperatorValue,
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"api":     "clusterapi",
-					"k8s-app": "controller",
+					ManagedByLabel: ManagedByLabelOperatorValue,
 				},
 			},
 			Template: *template,
@@ -131,8 +91,14 @@ func newDeployment(config *OperatorConfig, features map[string]bool) *appsv1.Dep
 	}
 }
 
-func newPodTemplateSpec(config *OperatorConfig, features map[string]bool) *corev1.PodTemplateSpec {
-	containers := newContainers(config, features)
+func newPodTemplateSpec(config *Config) *corev1.PodTemplateSpec {
+	containers := newContainers(config)
+
+	// we do not want to create deployment when it does not have any containers
+	if len(containers) == 0 {
+		return nil
+	}
+
 	tolerations := []corev1.Toleration{
 		{
 			Key:    "node-role.kubernetes.io/master",
@@ -159,8 +125,7 @@ func newPodTemplateSpec(config *OperatorConfig, features map[string]bool) *corev
 	return &corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: map[string]string{
-				"api":     "clusterapi",
-				"k8s-app": "controller",
+				ManagedByLabel: ManagedByLabelOperatorValue,
 			},
 		},
 		Spec: corev1.PodSpec{
@@ -177,7 +142,7 @@ func newPodTemplateSpec(config *OperatorConfig, features map[string]bool) *corev
 	}
 }
 
-func newContainers(config *OperatorConfig, features map[string]bool) []corev1.Container {
+func newContainers(config *Config) []corev1.Container {
 	resources := corev1.ResourceRequirements{
 		Requests: map[corev1.ResourceName]resource.Quantity{
 			corev1.ResourceMemory: resource.MustParse("20Mi"),
@@ -190,47 +155,13 @@ func newContainers(config *OperatorConfig, features map[string]bool) []corev1.Co
 		fmt.Sprintf("--namespace=%s", config.TargetNamespace),
 	}
 
-	containers := []corev1.Container{
-		{
-			Name:      "controller-manager",
-			Image:     config.Controllers.Provider,
-			Command:   []string{"/manager"},
-			Args:      args,
-			Resources: resources,
-		},
-		{
-			Name:    "machine-controller",
-			Image:   config.Controllers.Provider,
-			Command: []string{"/machine-controller-manager"},
-			Args:    args,
-			Env: []corev1.EnvVar{
-				{
-					Name: "NODE_NAME",
-					ValueFrom: &corev1.EnvVarSource{
-						FieldRef: &corev1.ObjectFieldSelector{
-							FieldPath: "spec.nodeName",
-						},
-					},
-				},
-			},
-		},
-		{
-			Name:      "nodelink-controller",
-			Image:     config.Controllers.NodeLink,
-			Command:   []string{"/nodelink-controller"},
-			Args:      args,
-			Resources: resources,
-		},
-	}
-	// add machine-health-check controller container if it exists and enabled under feature gates
-	if enabled, ok := features[FeatureGateMachineHealthCheck]; ok && enabled {
-		containers = append(containers, corev1.Container{
+	return []corev1.Container{
+		corev1.Container{
 			Name:      "machine-healthcheck-controller",
 			Image:     config.Controllers.MachineHealthCheck,
 			Command:   []string{"/machine-healthcheck"},
 			Args:      args,
 			Resources: resources,
-		})
+		},
 	}
-	return containers
 }

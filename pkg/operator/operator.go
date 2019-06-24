@@ -2,21 +2,22 @@ package operator
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/golang/glog"
-	osconfigv1 "github.com/openshift/api/config/v1"
+	osev1 "github.com/openshift/api/config/v1"
 	osclientset "github.com/openshift/client-go/config/clientset/versioned"
 	configinformersv1 "github.com/openshift/client-go/config/informers/externalversions/config/v1"
 	configlistersv1 "github.com/openshift/client-go/config/listers/config/v1"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	appsinformersv1 "k8s.io/client-go/informers/apps/v1"
+	coreinformersv1 "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/kubernetes"
 	appslisterv1 "k8s.io/client-go/listers/apps/v1"
+	corelistersv1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
@@ -29,14 +30,18 @@ const (
 	//
 	// 5ms, 10ms, 20ms, 40ms, 80ms, 160ms, 320ms, 640ms, 1.3s, 2.6s, 5.1s, 10.2s, 20.4s, 41s, 82s
 	maxRetries = 15
+	// machineAPIOperatorImages contains the name of the config map with machine-api-operator images
+	machineAPIOperatorImages = "machine-api-operator-images"
+	// ManagedByLabel contains machine-health-check-operator label key
+	ManagedByLabel = "app.kubernetes.io/managed-by"
+	// ManagedByLabelOperatorValue contains machine-health-check-operator label value
+	ManagedByLabelOperatorValue = "machine-health-check-operator"
 )
 
 // Operator defines machine api operator.
 type Operator struct {
 	namespace, name string
-
-	imagesFile string
-	config     string
+	config          string
 
 	kubeClient    kubernetes.Interface
 	osClient      osclientset.Interface
@@ -50,18 +55,19 @@ type Operator struct {
 	featureGateLister      configlistersv1.FeatureGateLister
 	featureGateCacheSynced cache.InformerSynced
 
+	configMapLister      corelistersv1.ConfigMapLister
+	configMapCacheSynced cache.InformerSynced
+
 	// queue only ever has one item, but it has nice error handling backoff/retry semantics
-	queue           workqueue.RateLimitingInterface
-	operandVersions []osconfigv1.OperandVersion
+	queue workqueue.RateLimitingInterface
 }
 
 // New returns a new machine config operator.
 func New(
 	namespace, name string,
-	imagesFile string,
-
 	config string,
 
+	configMapInformer coreinformersv1.ConfigMapInformer,
 	deployInformer appsinformersv1.DeploymentInformer,
 	featureGateInformer configinformersv1.FeatureGateInformer,
 
@@ -70,26 +76,18 @@ func New(
 
 	recorder record.EventRecorder,
 ) *Operator {
-	// we must report the version from the release payload when we report available at that level
-	// TODO we will report the version of the operands (so our machine api implementation version)
-	operandVersions := []osconfigv1.OperandVersion{}
-	if releaseVersion := os.Getenv("RELEASE_VERSION"); len(releaseVersion) > 0 {
-		operandVersions = append(operandVersions, osconfigv1.OperandVersion{Name: "operator", Version: releaseVersion})
-	}
-
 	optr := &Operator{
-		namespace:       namespace,
-		name:            name,
-		imagesFile:      imagesFile,
-		kubeClient:      kubeClient,
-		osClient:        osClient,
-		eventRecorder:   recorder,
-		queue:           workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "machineapioperator"),
-		operandVersions: operandVersions,
+		namespace:     namespace,
+		name:          name,
+		kubeClient:    kubeClient,
+		osClient:      osClient,
+		eventRecorder: recorder,
+		queue:         workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "machinehealthcheckoperator"),
 	}
 
 	deployInformer.Informer().AddEventHandler(optr.eventHandler())
 	featureGateInformer.Informer().AddEventHandler(optr.eventHandler())
+	configMapInformer.Informer().AddEventHandler(optr.eventHandler())
 
 	optr.config = config
 	optr.syncHandler = optr.sync
@@ -100,6 +98,9 @@ func New(
 	optr.featureGateLister = featureGateInformer.Lister()
 	optr.featureGateCacheSynced = featureGateInformer.Informer().HasSynced
 
+	optr.configMapLister = configMapInformer.Lister()
+	optr.configMapCacheSynced = configMapInformer.Informer().HasSynced
+
 	return optr
 }
 
@@ -108,12 +109,13 @@ func (optr *Operator) Run(workers int, stopCh <-chan struct{}) {
 	defer utilruntime.HandleCrash()
 	defer optr.queue.ShutDown()
 
-	glog.Info("Starting Machine API Operator")
-	defer glog.Info("Shutting down Machine API Operator")
+	glog.Info("Starting Machine Health Check Operator")
+	defer glog.Info("Shutting down Machine Health Check Operator")
 
 	if !cache.WaitForCacheSync(stopCh,
 		optr.deployListerSynced,
-		optr.featureGateCacheSynced) {
+		optr.featureGateCacheSynced,
+		optr.configMapCacheSynced) {
 		glog.Error("Failed to sync caches")
 		return
 	}
@@ -177,7 +179,7 @@ func (optr *Operator) sync(key string) error {
 		glog.V(4).Infof("Finished syncing operator %q (%v)", key, time.Since(startTime))
 	}()
 
-	operatorConfig, err := optr.maoConfigFromInfrastructure()
+	operatorConfig, err := optr.configFromInfrastructure()
 	if err != nil {
 		glog.Errorf("Failed getting operator config: %v", err)
 		return err
@@ -185,38 +187,54 @@ func (optr *Operator) sync(key string) error {
 	return optr.syncAll(operatorConfig)
 }
 
-func (optr *Operator) maoConfigFromInfrastructure() (*OperatorConfig, error) {
-	infra, err := optr.osClient.ConfigV1().Infrastructures().Get("cluster", metav1.GetOptions{})
+func (optr *Operator) configFromInfrastructure() (*Config, error) {
+	cmImages, err := optr.configMapLister.ConfigMaps(optr.namespace).Get(machineAPIOperatorImages)
 	if err != nil {
 		return nil, err
 	}
 
-	provider, err := getProviderFromInfrastructure(infra)
+	machineAPIOperatorImage, err := getMachineAPIOperatorFromConfigMap(cmImages)
 	if err != nil {
 		return nil, err
 	}
 
-	images, err := getImagesFromJSONFile(optr.imagesFile)
+	techPreviewEnabled, err := optr.isTechPreviewEnabled()
 	if err != nil {
 		return nil, err
 	}
 
-	providerControllerImage, err := getProviderControllerFromImages(provider, *images)
-	if err != nil {
-		return nil, err
-	}
-
-	machineAPIOperatorImage, err := getMachineAPIOperatorFromImages(*images)
-	if err != nil {
-		return nil, err
-	}
-
-	return &OperatorConfig{
-		TargetNamespace: optr.namespace,
+	return &Config{
+		TargetNamespace:    optr.namespace,
+		TechPreviewEnabled: techPreviewEnabled,
 		Controllers: Controllers{
-			Provider:           providerControllerImage,
-			NodeLink:           machineAPIOperatorImage,
 			MachineHealthCheck: machineAPIOperatorImage,
 		},
 	}, nil
+}
+
+func (optr *Operator) isTechPreviewEnabled() (bool, error) {
+	// Fetch the Feature
+	featureGate, err := optr.featureGateLister.Get(MachineAPIFeatureGateName)
+
+	var featureSet osev1.FeatureSet
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			return false, err
+		}
+		glog.V(2).Infof("Failed to find feature gate %q, will use default feature set", MachineAPIFeatureGateName)
+		featureSet = osev1.Default
+	} else {
+		featureSet = featureGate.Spec.FeatureSet
+	}
+
+	features, err := generateFeatureMap(featureSet)
+	if err != nil {
+		return false, err
+	}
+
+	if enabled, ok := features[FeatureGateMachineHealthCheck]; ok && enabled {
+		return true, nil
+	}
+
+	return false, nil
 }

@@ -11,13 +11,13 @@ import (
 var componentNamespace = "openshift-machine-api"
 
 const (
-	componentName = "machine-api-operator"
+	componentName = "machine-health-check-operator"
 )
 
 var (
 	rootCmd = &cobra.Command{
 		Use:   componentName,
-		Short: "Run Cluster API Controller",
+		Short: "Run machine health check operator that will deploy machine health check controller",
 		Long:  "",
 	}
 	config string
@@ -32,6 +32,6 @@ func main() {
 		componentNamespace = namespace
 	}
 	if err := rootCmd.Execute(); err != nil {
-		glog.Exitf("Error executing mao: %v", err)
+		glog.Exitf("Error executing machine health check operator: %v", err)
 	}
 }

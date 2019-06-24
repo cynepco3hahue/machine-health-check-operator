@@ -2,6 +2,10 @@
 bazel-build:
 	./hack/dockerized "./hack/bazel/build.sh"
 
+.PHONY: bazel-generate
+bazel-generate:
+	SYNC_VENDOR=true ./hack/dockerized "./hack/bazel/generate.sh"
+
 .PHONY: bazel-push-images
 bazel-push-images:
 	./hack/dockerized "CONTAINER_PREFIX=${CONTAINER_PREFIX} CONTAINER_TAG=${CONTAINER_TAG} ./hack/bazel/push-images.sh"
@@ -12,4 +16,9 @@ fmt:
 
 .PHONY: deps-update
 deps-update:
-	./hack/dockerized "SYNC_VENDOR=true ./hack/deps-update.sh"
+	SYNC_VENDOR=true ./hack/dockerized "./hack/deps-update.sh"
+
+.PHONY: distclean
+distclean:
+	hack/dockerized "rm -rf vendor/ && rm -f go.sum && GO111MODULE=on go clean -modcache"
+	rm -rf vendor/

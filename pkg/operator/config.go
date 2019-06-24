@@ -3,29 +3,24 @@ package operator
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 
-	configv1 "github.com/openshift/api/config/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
-const (
-	// TODO(alberto): move to "quay.io/openshift/origin-kubemark-machine-controllers:v4.0.0" once available
-	clusterAPIControllerKubemark = "docker.io/gofed/kubemark-machine-controllers:v1.0"
-	clusterAPIControllerNoOp     = "no-op"
-	kubemarkPlatform             = configv1.PlatformType("kubemark")
-)
+const imageJSON = "images.json"
 
+// Provider contains provider type
 type Provider string
 
-// OperatorConfig contains configuration for MAO
-type OperatorConfig struct {
-	TargetNamespace string `json:"targetNamespace"`
-	Controllers     Controllers
+// Config contains configuration for MHCO
+type Config struct {
+	TargetNamespace    string
+	TechPreviewEnabled bool
+	Controllers        Controllers
 }
 
+// Controllers contains controllers images
 type Controllers struct {
-	Provider           string
-	NodeLink           string
 	MachineHealthCheck string
 }
 
@@ -39,46 +34,25 @@ type Images struct {
 	ClusterAPIControllerAzure     string `json:"clusterAPIControllerAzure"`
 }
 
-func getProviderFromInfrastructure(infra *configv1.Infrastructure) (configv1.PlatformType, error) {
-	if infra.Status.Platform == "" {
-		return "", fmt.Errorf("no platform provider found on install config")
-	}
-	return infra.Status.Platform, nil
-}
-
-func getImagesFromJSONFile(filePath string) (*Images, error) {
-	data, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return nil, err
+func getImagesFromConfigMap(cmImages *corev1.ConfigMap) (*Images, error) {
+	data, ok := cmImages.Data[imageJSON]
+	if !ok {
+		return nil, fmt.Errorf("config map %s does not have data with key %s", cmImages.Name, imageJSON)
 	}
 
 	var i Images
-	if err := json.Unmarshal(data, &i); err != nil {
+	if err := json.Unmarshal([]byte(data), &i); err != nil {
 		return nil, err
 	}
 	return &i, nil
 }
 
-func getProviderControllerFromImages(platform configv1.PlatformType, images Images) (string, error) {
-	switch platform {
-	case configv1.AWSPlatformType:
-		return images.ClusterAPIControllerAWS, nil
-	case configv1.LibvirtPlatformType:
-		return images.ClusterAPIControllerLibvirt, nil
-	case configv1.OpenStackPlatformType:
-		return images.ClusterAPIControllerOpenStack, nil
-	case configv1.AzurePlatformType:
-		return images.ClusterAPIControllerAzure, nil
-	case configv1.BareMetalPlatformType:
-		return images.ClusterAPIControllerBareMetal, nil
-	case kubemarkPlatform:
-		return clusterAPIControllerKubemark, nil
-	default:
-		return clusterAPIControllerNoOp, nil
+func getMachineAPIOperatorFromConfigMap(cmImages *corev1.ConfigMap) (string, error) {
+	images, err := getImagesFromConfigMap(cmImages)
+	if err != nil {
+		return "", err
 	}
-}
 
-func getMachineAPIOperatorFromImages(images Images) (string, error) {
 	if images.MachineAPIOperator == "" {
 		return "", fmt.Errorf("failed gettingMachineAPIOperator image. It is empty")
 	}

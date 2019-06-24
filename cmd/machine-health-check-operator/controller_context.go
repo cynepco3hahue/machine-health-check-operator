@@ -3,8 +3,10 @@ package main
 import (
 	"time"
 
+	"github.com/cynepco3hahue/machine-health-check-operator/pkg/operator"
 	configinformersv1 "github.com/openshift/client-go/config/informers/externalversions"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/informers"
 )
@@ -13,8 +15,9 @@ import (
 type ControllerContext struct {
 	ClientBuilder *ClientBuilder
 
-	KubeNamespacedInformerFactory informers.SharedInformerFactory
-	ConfigInformerFactory         configinformersv1.SharedInformerFactory
+	DeploymentInformerFactory informers.SharedInformerFactory
+	ConfigMapInformerFactory  informers.SharedInformerFactory
+	ConfigInformerFactory     configinformersv1.SharedInformerFactory
 
 	AvailableResources map[schema.GroupVersionResource]bool
 
@@ -30,15 +33,21 @@ func CreateControllerContext(cb *ClientBuilder, stop <-chan struct{}, targetName
 	kubeClient := cb.KubeClientOrDie("kube-shared-informer")
 	configClient := cb.OpenshiftClientOrDie("config-shared-informer")
 
-	kubeNamespacedSharedInformer := informers.NewSharedInformerFactoryWithOptions(kubeClient, resyncPeriod()(), informers.WithNamespace(targetNamespace))
-	configSharedInformer := configinformersv1.NewSharedInformerFactoryWithOptions(configClient, resyncPeriod()())
+	configMapInformerFactory := informers.NewSharedInformerFactoryWithOptions(kubeClient, resyncPeriod()(), informers.WithNamespace(targetNamespace))
+	tweakListOptions := func(listOptions *metav1.ListOptions) {
+		listOptions.LabelSelector = operator.ManagedByLabel + "=" + operator.ManagedByLabelOperatorValue
+	}
+	deploymentInformerFactory := informers.NewSharedInformerFactoryWithOptions(kubeClient, resyncPeriod()(), informers.WithTweakListOptions(tweakListOptions), informers.WithNamespace(targetNamespace))
+
+	configInformerFactory := configinformersv1.NewSharedInformerFactoryWithOptions(configClient, resyncPeriod()(), configinformersv1.WithNamespace(targetNamespace))
 
 	return &ControllerContext{
-		ClientBuilder:                 cb,
-		KubeNamespacedInformerFactory: kubeNamespacedSharedInformer,
-		ConfigInformerFactory:         configSharedInformer,
-		Stop:                          stop,
-		InformersStarted:              make(chan struct{}),
-		ResyncPeriod:                  resyncPeriod(),
+		ClientBuilder:             cb,
+		DeploymentInformerFactory: deploymentInformerFactory,
+		ConfigMapInformerFactory:  configMapInformerFactory,
+		ConfigInformerFactory:     configInformerFactory,
+		Stop:                      stop,
+		InformersStarted:          make(chan struct{}),
+		ResyncPeriod:              resyncPeriod(),
 	}
 }

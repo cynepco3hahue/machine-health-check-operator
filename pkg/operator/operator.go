@@ -197,11 +197,13 @@ func (optr *Operator) configFromInfrastructure() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	glog.V(4).Infof("machine API operator images %s", machineAPIOperatorImage)
 
 	techPreviewEnabled, err := optr.isTechPreviewEnabled()
 	if err != nil {
 		return nil, err
 	}
+	glog.V(4).Infof("tech preview enabled: %t", techPreviewEnabled)
 
 	return &Config{
 		TargetNamespace:    optr.namespace,

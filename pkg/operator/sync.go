@@ -10,10 +10,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	appsclientv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 	"k8s.io/utils/pointer"
 
 	"github.com/golang/glog"
-	"github.com/openshift/cluster-version-operator/lib/resourceapply"
 )
 
 const (
@@ -23,11 +23,12 @@ const (
 
 func (optr *Operator) syncAll(config *Config) error {
 	controller := newDeployment(config, config.TechPreviewEnabled)
-	_, updated, err := resourceapply.ApplyDeployment(optr.kubeClient.AppsV1(), controller)
+	updated, err := applyDeploymentReplicas(optr.kubeClient.AppsV1(), controller)
 	if err != nil {
 		return err
 	}
 	if updated {
+		glog.V(4).Infof("Update deployment %s with replicas %d", controller.Name, *controller.Spec.Replicas)
 		return optr.waitForDeploymentRollout(controller)
 	}
 	return nil
@@ -165,4 +166,26 @@ func newContainers(config *Config) []corev1.Container {
 			Resources: resources,
 		},
 	}
+}
+
+// applyDeploymentReplicas applies the required deployment replicas to the cluster
+func applyDeploymentReplicas(client appsclientv1.DeploymentsGetter, deployment *appsv1.Deployment) (bool, error) {
+	existing, err := client.Deployments(deployment.Namespace).Get(deployment.Name, metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		_, err := client.Deployments(deployment.Namespace).Create(deployment)
+		return true, err
+	}
+	if err != nil {
+		return false, err
+	}
+
+	modified := false
+	if *existing.Spec.Replicas != *deployment.Spec.Replicas {
+		_, err = client.Deployments(deployment.Namespace).Update(deployment)
+		if err != nil {
+			return modified, err
+		}
+		modified = true
+	}
+	return modified, nil
 }

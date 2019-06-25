@@ -17,7 +17,6 @@ require (
 	github.com/onsi/gomega v1.4.2 // indirect
 	github.com/openshift/api v3.9.1-0.20190621203108-e6261f37404f+incompatible
 	github.com/openshift/client-go v3.9.0+incompatible
-	github.com/openshift/cluster-version-operator v1.0.0
 	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/spf13/cobra v0.0.5
@@ -31,10 +30,8 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.2.2 // indirect
 	k8s.io/api v0.0.0-20190620073856-dcce3486da33
-	k8s.io/apiextensions-apiserver v0.0.0-20190620075237-c8f64ade8733 // indirect
 	k8s.io/apimachinery v0.0.0-20190620073744-d16981aedf33
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
-	k8s.io/kube-aggregator v0.0.0-20190620074825-e31f68fc485e // indirect
 	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208 // indirect
 	k8s.io/utils v0.0.0-20190607212802-c55fbcfc754a
 	sigs.k8s.io/yaml v1.1.0 // indirect

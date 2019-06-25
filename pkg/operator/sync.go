@@ -73,7 +73,7 @@ func newDeployment(config *Config, techPreviewEnabled bool) *appsv1.Deployment {
 
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "machine-health-check-operator",
+			Name:      "machine-health-check-controller",
 			Namespace: config.TargetNamespace,
 			Labels: map[string]string{
 				ManagedByLabel: ManagedByLabelOperatorValue,
@@ -157,7 +157,7 @@ func newContainers(config *Config) []corev1.Container {
 
 	return []corev1.Container{
 		corev1.Container{
-			Name:      "machine-healthcheck-controller",
+			Name:      "machine-health-check-controller",
 			Image:     config.Controllers.MachineHealthCheck,
 			Command:   []string{"/machine-healthcheck"},
 			Args:      args,

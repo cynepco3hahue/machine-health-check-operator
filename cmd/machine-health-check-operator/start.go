@@ -28,7 +28,6 @@ var (
 
 	startOpts struct {
 		kubeconfig string
-		imagesFile string
 	}
 )
 

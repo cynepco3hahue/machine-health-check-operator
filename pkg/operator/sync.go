@@ -152,7 +152,8 @@ func newContainers(config *Config) []corev1.Container {
 	args := []string{
 		"--logtostderr=true",
 		"--v=3",
-		fmt.Sprintf("--namespace=%s", config.TargetNamespace),
+		// Available only in 4.2
+		//fmt.Sprintf("--namespace=%s", config.TargetNamespace),
 	}
 
 	return []corev1.Container{

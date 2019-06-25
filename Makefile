@@ -15,11 +15,7 @@ bazel-tests:
 	hack/dockerized "bazel test \
 		--platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 \
 		--workspace_status_command=./hack/print-workspace-status.sh \
-        --test_output=errors -- //pkg/..."
-
-.PHONY: fmt
-fmt:
-	./hack/dockerized "./hack/bazel/fmt.sh"
+        --test_output=errors -- //pkg/... //tools/..."
 
 .PHONY: deps-update
 deps-update:
@@ -29,3 +25,16 @@ deps-update:
 distclean:
 	hack/dockerized "rm -rf vendor/ && rm -f go.sum && GO111MODULE=on go clean -modcache"
 	rm -rf vendor/
+
+
+.PHONY: fmt
+fmt:
+	./hack/dockerized "./hack/bazel/fmt.sh"
+
+.PHONY: generate
+generate:
+	./hack/dockerized "./hack/generate.sh"
+
+.PHONY: generate-manifests
+generate-manifests: generate
+	./hack/dockerized "./hack/generate-manifests.sh"

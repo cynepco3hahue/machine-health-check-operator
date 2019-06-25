@@ -17,3 +17,10 @@ bazel-genfiles/
 bazel-machine-health-check-operator/
 bazel-out/
 bazel-testlogs/
+
+# Ignore tools binaries
+tools/resource-generator/resource-generator
+tools/manifest-templator/manifest-templator
+
+# Ignore _out directory
+_out

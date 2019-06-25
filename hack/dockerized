@@ -111,8 +111,7 @@ _rsync \
     "rsync://root@127.0.0.1:${RSYNCD_PORT}/build" \
     ${REPO_DIR}/
 
-#_rsync --delete "rsync://root@127.0.0.1:${RSYNCD_PORT}/build/manifests/generated/" "${REPO_DIR}/manifests/generated"
-#_rsync --delete "rsync://root@127.0.0.1:${RSYNCD_PORT}/build/examples/" "${REPO_DIR}/examples"
+_rsync --delete "rsync://root@127.0.0.1:${RSYNCD_PORT}/build/manifests/generated/" "${REPO_DIR}/manifests/generated"
 if [ "$SYNC_VENDOR" = "true" ]; then
     _rsync --delete "rsync://root@127.0.0.1:${RSYNCD_PORT}/vendor" "${VENDOR_DIR}/"
 fi

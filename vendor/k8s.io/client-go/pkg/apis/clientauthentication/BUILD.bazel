@@ -8,7 +8,7 @@ go_library(
         "types.go",
         "zz_generated.deepcopy.go",
     ],
-    importmap = "github.com/cynepco3hahue/machine-health-check-operator/vendor/k8s.io/client-go/pkg/apis/clientauthentication",
+    importmap = "github.com/openshift/machine-health-check-operator/vendor/k8s.io/client-go/pkg/apis/clientauthentication",
     importpath = "k8s.io/client-go/pkg/apis/clientauthentication",
     visibility = ["//visibility:public"],
     deps = [

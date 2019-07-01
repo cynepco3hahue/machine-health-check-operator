@@ -6,7 +6,7 @@ go_library(
         "certificatesigningrequest.go",
         "interface.go",
     ],
-    importmap = "github.com/cynepco3hahue/machine-health-check-operator/vendor/k8s.io/client-go/informers/certificates/v1beta1",
+    importmap = "github.com/openshift/machine-health-check-operator/vendor/k8s.io/client-go/informers/certificates/v1beta1",
     importpath = "k8s.io/client-go/informers/certificates/v1beta1",
     visibility = ["//visibility:public"],
     deps = [

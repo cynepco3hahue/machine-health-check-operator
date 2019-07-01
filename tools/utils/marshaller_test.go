@@ -24,7 +24,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/cynepco3hahue/machine-health-check-operator/tools/components"
+	"github.com/openshift/machine-health-check-operator/tools/components"
 )
 
 func TestMarshallObject(t *testing.T) {

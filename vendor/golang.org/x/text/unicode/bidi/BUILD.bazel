@@ -11,7 +11,7 @@ go_library(
         "tables9.0.0.go",
         "trieval.go",
     ],
-    importmap = "github.com/cynepco3hahue/machine-health-check-operator/vendor/golang.org/x/text/unicode/bidi",
+    importmap = "github.com/openshift/machine-health-check-operator/vendor/golang.org/x/text/unicode/bidi",
     importpath = "golang.org/x/text/unicode/bidi",
     visibility = ["//visibility:public"],
 )

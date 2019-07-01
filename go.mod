@@ -1,4 +1,4 @@
-module github.com/cynepco3hahue/machine-health-check-operator
+module github.com/openshift/machine-health-check-operator
 
 require (
 	github.com/evanphx/json-patch v4.5.0+incompatible // indirect

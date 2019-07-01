@@ -11,7 +11,7 @@ go_library(
         "command_win.go",
         "zsh_completions.go",
     ],
-    importmap = "github.com/cynepco3hahue/machine-health-check-operator/vendor/github.com/spf13/cobra",
+    importmap = "github.com/openshift/machine-health-check-operator/vendor/github.com/spf13/cobra",
     importpath = "github.com/spf13/cobra",
     visibility = ["//visibility:public"],
     deps = [

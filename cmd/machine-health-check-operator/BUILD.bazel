@@ -10,7 +10,7 @@ go_library(
         "start.go",
         "version.go",
     ],
-    importpath = "github.com/cynepco3hahue/machine-health-check-operator/cmd/machine-health-check-operator",
+    importpath = "github.com/openshift/machine-health-check-operator/cmd/machine-health-check-operator",
     visibility = ["//visibility:private"],
     deps = [
         "//pkg/operator:go_default_library",

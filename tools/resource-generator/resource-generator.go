@@ -26,8 +26,8 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/cynepco3hahue/machine-health-check-operator/tools/components"
-	"github.com/cynepco3hahue/machine-health-check-operator/tools/utils"
+	"github.com/openshift/machine-health-check-operator/tools/components"
+	"github.com/openshift/machine-health-check-operator/tools/utils"
 )
 
 func main() {

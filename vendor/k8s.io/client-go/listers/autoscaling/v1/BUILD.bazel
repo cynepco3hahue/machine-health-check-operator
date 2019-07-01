@@ -6,7 +6,7 @@ go_library(
         "expansion_generated.go",
         "horizontalpodautoscaler.go",
     ],
-    importmap = "github.com/cynepco3hahue/machine-health-check-operator/vendor/k8s.io/client-go/listers/autoscaling/v1",
+    importmap = "github.com/openshift/machine-health-check-operator/vendor/k8s.io/client-go/listers/autoscaling/v1",
     importpath = "k8s.io/client-go/listers/autoscaling/v1",
     visibility = ["//visibility:public"],
     deps = [

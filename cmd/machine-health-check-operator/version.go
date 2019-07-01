@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/cynepco3hahue/machine-health-check-operator/pkg/version"
+	"github.com/openshift/machine-health-check-operator/pkg/version"
 	"github.com/spf13/cobra"
 )
 

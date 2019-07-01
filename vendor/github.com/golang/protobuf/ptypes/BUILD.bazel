@@ -8,7 +8,7 @@ go_library(
         "duration.go",
         "timestamp.go",
     ],
-    importmap = "github.com/cynepco3hahue/machine-health-check-operator/vendor/github.com/golang/protobuf/ptypes",
+    importmap = "github.com/openshift/machine-health-check-operator/vendor/github.com/golang/protobuf/ptypes",
     importpath = "github.com/golang/protobuf/ptypes",
     visibility = ["//visibility:public"],
     deps = [

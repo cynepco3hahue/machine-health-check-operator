@@ -24,7 +24,7 @@ go_library(
         "service_expansion.go",
         "serviceaccount.go",
     ],
-    importmap = "github.com/cynepco3hahue/machine-health-check-operator/vendor/k8s.io/client-go/listers/core/v1",
+    importmap = "github.com/openshift/machine-health-check-operator/vendor/k8s.io/client-go/listers/core/v1",
     importpath = "k8s.io/client-go/listers/core/v1",
     visibility = ["//visibility:public"],
     deps = [

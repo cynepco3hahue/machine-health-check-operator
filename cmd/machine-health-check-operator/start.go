@@ -4,8 +4,8 @@ import (
 	"context"
 	"flag"
 
-	"github.com/cynepco3hahue/machine-health-check-operator/pkg/operator"
-	"github.com/cynepco3hahue/machine-health-check-operator/pkg/version"
+	"github.com/openshift/machine-health-check-operator/pkg/operator"
+	"github.com/openshift/machine-health-check-operator/pkg/version"
 	"github.com/golang/glog"
 	osconfigv1 "github.com/openshift/api/config/v1"
 	"github.com/spf13/cobra"

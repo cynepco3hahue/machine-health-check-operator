@@ -8,7 +8,7 @@ go_library(
         "huffman.go",
         "tables.go",
     ],
-    importmap = "github.com/cynepco3hahue/machine-health-check-operator/vendor/golang.org/x/net/http2/hpack",
+    importmap = "github.com/openshift/machine-health-check-operator/vendor/golang.org/x/net/http2/hpack",
     importpath = "golang.org/x/net/http2/hpack",
     visibility = ["//visibility:public"],
 )

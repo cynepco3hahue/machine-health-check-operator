@@ -26,7 +26,7 @@ go_library(
         "zerrors_windows.go",
         "zsyscall_windows.go",
     ],
-    importmap = "github.com/cynepco3hahue/machine-health-check-operator/vendor/golang.org/x/sys/windows",
+    importmap = "github.com/openshift/machine-health-check-operator/vendor/golang.org/x/sys/windows",
     importpath = "golang.org/x/sys/windows",
     visibility = ["//visibility:public"],
 )

@@ -23,7 +23,7 @@ go_library(
         "proxy.go",
         "scheduler.go",
     ],
-    importmap = "github.com/cynepco3hahue/machine-health-check-operator/vendor/github.com/openshift/client-go/config/clientset/versioned/typed/config/v1",
+    importmap = "github.com/openshift/machine-health-check-operator/vendor/github.com/openshift/client-go/config/clientset/versioned/typed/config/v1",
     importpath = "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1",
     visibility = ["//visibility:public"],
     deps = [

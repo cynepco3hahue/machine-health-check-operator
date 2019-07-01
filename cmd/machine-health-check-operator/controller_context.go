@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/cynepco3hahue/machine-health-check-operator/pkg/operator"
+	"github.com/openshift/machine-health-check-operator/pkg/operator"
 	configinformersv1 "github.com/openshift/client-go/config/informers/externalversions"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

@@ -6,7 +6,7 @@ go_library(
         "factory.go",
         "generic.go",
     ],
-    importmap = "github.com/cynepco3hahue/machine-health-check-operator/vendor/k8s.io/client-go/informers",
+    importmap = "github.com/openshift/machine-health-check-operator/vendor/k8s.io/client-go/informers",
     importpath = "k8s.io/client-go/informers",
     visibility = ["//visibility:public"],
     deps = [

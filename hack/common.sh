@@ -13,5 +13,5 @@ VENDOR_DIR=$REPO_DIR/vendor
 CMD_OUT_DIR=$OUT_DIR/cmd
 MANIFESTS_OUT_DIR=$OUT_DIR/manifests
 
-BUILDER_REPO_DIR=/root/go/src/github.com/cynepco3hahue/machine-health-check-operator
+BUILDER_REPO_DIR=/root/go/src/github.com/openshift/machine-health-check-operator
 BUILDER_OUT_DIR=$BUILDER_REPO_DIR/_out

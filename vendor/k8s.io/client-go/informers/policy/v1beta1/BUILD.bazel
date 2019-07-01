@@ -7,7 +7,7 @@ go_library(
         "poddisruptionbudget.go",
         "podsecuritypolicy.go",
     ],
-    importmap = "github.com/cynepco3hahue/machine-health-check-operator/vendor/k8s.io/client-go/informers/policy/v1beta1",
+    importmap = "github.com/openshift/machine-health-check-operator/vendor/k8s.io/client-go/informers/policy/v1beta1",
     importpath = "k8s.io/client-go/informers/policy/v1beta1",
     visibility = ["//visibility:public"],
     deps = [

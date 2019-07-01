@@ -6,7 +6,7 @@ go_library(
         "doc.go",
         "register.go",
     ],
-    importmap = "github.com/cynepco3hahue/machine-health-check-operator/vendor/github.com/openshift/client-go/config/clientset/versioned/scheme",
+    importmap = "github.com/openshift/machine-health-check-operator/vendor/github.com/openshift/client-go/config/clientset/versioned/scheme",
     importpath = "github.com/openshift/client-go/config/clientset/versioned/scheme",
     visibility = ["//visibility:public"],
     deps = [

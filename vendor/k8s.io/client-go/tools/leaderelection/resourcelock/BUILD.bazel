@@ -8,7 +8,7 @@ go_library(
         "interface.go",
         "leaselock.go",
     ],
-    importmap = "github.com/cynepco3hahue/machine-health-check-operator/vendor/k8s.io/client-go/tools/leaderelection/resourcelock",
+    importmap = "github.com/openshift/machine-health-check-operator/vendor/k8s.io/client-go/tools/leaderelection/resourcelock",
     importpath = "k8s.io/client-go/tools/leaderelection/resourcelock",
     visibility = ["//visibility:public"],
     deps = [
